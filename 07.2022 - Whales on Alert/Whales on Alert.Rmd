@@ -3,6 +3,7 @@ title: "Whales on Alert"
 output: 
   flexdashboard::flex_dashboard:
     vertical_layout: scroll
+    orientation: rows
     source_code: https://github.com/manuelgirbal/metricsdao/tree/main/07.2022%20-%20Whales%20on%20Alert
 runtime: shiny
 ---
@@ -60,27 +61,30 @@ whalesbalance <- data3_1 %>%
 
 ```
 
+Row {data-height=100}
+-------------------------------------
+#### **Introduction**
 
-### Introduction
+In this article we'll identify active wallets with a high balance of ETH (called whales), and visualize their ETH transaction history in May and June 2022, period in which the USD price of ETH fell from near 3k to values even below 1k USD. Specifically, We'll try to identify how many whales are out there, and if they panic-sold ETH in this period. We'll also take a look into the kind of transactions they did with their ETH.
 
-In this article we'll identify active wallets with a high balance of ETH (called whales), and visualize their ETH transaction history in May and June 2022, period in which the USD price of ETH fell from near 3k to values even below 1k USD. 
+Row {data-height=100}
+-------------------------------------
+#### **Data & Methodology**
 
-Specifically, We'll try to identify how many whales are out there, and if they panic-sold ETH in this period. We'll also take a look into the kind of transactions thay did with their ETH.
-
-
-### Data & Methodology
-
-Data was queried from Flipside Crypto's database, Velocity (SQL code used can be found in the Github repository linked above).
+Data was queried from Flipside Crypto's database, Velocity. SQL code used can be found in the Github repository linked above). 
 From this app we obtained two main datasets: 
 
 
+Row {data-height=450}
+-------------------------------------
 ### Dataset 1
 
-A first dataset was obtained from a merge of two tables, one with accounts addresses and ETH balances from 2022-05-01, and other from 2022-07-15. In both cases we just selected non-labeled addresses (in order to exclude exchanges and protocol addresses) and accounts which held more than 10k USD value in ETH at that time.
+A first dataset was obtained from a merge of two tables, one with account addresses and ETH balances from 2022-05-01, and another from 2022-07-15. In both cases we just selected non-labeled addresses (in order to exclude exchanges and protocol addresses) and accounts which held more than 10k USD value in ETH at that time.
 
-After this query, we calculated the 99 percentile of the amount of ETH held by these accounts in may, in order to select just top 1% accounts (978 whales). Also, a balance in absolute and percentual values was calculated fro these addresses, in order to compare the july balance against may balance, and see if they increased their ETH position, or whether they kept it or sold some or all of their ETH.
+After this query, we calculated the 99 percentile of the amount of ETH held by these accounts in may, in order to select just top 1% accounts (978 whales). Also, a balance in absolute and percent values was calculated for these addresses in order to compare the July balance against May balance, and see whether they increased their ETH position, kept it or sold some/all of their ETH.
 
-__So in this article we'll consider whales to accounts belonging to the 99 percentile of ETH holders__
+*So in this article we'll consider as whales those accounts belonging to the 99 percentile of ETH holders:*
+
 
 ```{r}
 renderDT({
@@ -92,11 +96,12 @@ renderDT({
 })
 ```
 
-
+Row {data-height=350}
+-------------------------------------
 
 ### Dataset 2
 
-The second table used contains the transaction activity of these whales (if they have made some transfers with ETH from may22 to july22) and the labels of the recipien address of those transactions:
+The second table used contains transaction activity of these whales (if they have made some transfers with ETH from may22 to july22) and the labels of the recipient addresses for those transactions:
 
 ```{r}
 renderDT({
@@ -109,10 +114,16 @@ renderDT({
 ```
 
 
+Row {data-height=150}
+-------------------------------------
 
-### Analysis
+#### **Analysis**
 
-So, first of all, it would be interesting to know how many of these 978 whales kept the same balance between may and july22 (diamond hands), which of those even increased their ETH position (taking advantage of the dip) and how many of them made transactions spending or selling their ETH:
+So, first of all, it would be interesting to know how many of these 978 whales kept the same balance between may and july22 (diamond hands), which of those increased their ETH position (taking advantage of the dip), and how many of them made transactions spending or selling their ETH. 
+Also, to get a better understanding of the variation in their balance, we can take a look at the histogram (which excludes accounts that held their ETH position for a better appreciation):
+
+Row {data-height=550}
+-------------------------------------
 
 ```{r, fig.height= 4}
 renderPlotly({
@@ -128,10 +139,6 @@ fig0
 })
 ```
 
-So, most of them (713) kept the same ETH balance, and 75 whales increased their amount held. But it's also interesting to note that 56 whales sold all their ETH (or at least they send them away from their account -more on this later-), and that 134 sold at least some of them.
-
-
-To get a better understanding of the variation in their balance between may and july, let's take a look at this chart (which excludes accounts which held their ETH position):
 
 ```{r, fig.height= 4}
 renderPlotly({
@@ -139,24 +146,26 @@ plot_ly(data = whalesbalance %>% filter(percentual_balance != 0),
         x = ~percentual_balance, 
         type = "histogram") %>% 
   layout(bargap=0.1,
-         xaxis = list(title = 'Whales percentual balance change (may22-july22)'),
+         xaxis = list(title = 'Balance change %'),
          autosize = F
   )
 })
 ```
 
+Row {data-height=50}
+-------------------------------------
+So, it's clear that most of them (713) kept the same ETH balance, and 75 whales increased their amount held. But it's also interesting to note that 56 whales sold all their ETH (or at least they send them away from their account -more on this later-), and that 134 sold at least some of them.
+As regards to the percentage change in their balances, it's interesting to note that many of them (74 whales) just saw less than a 10% change (either positive or negative), while very few increased their position above a 100% change (which seems unsderstadable as they are already whales!).  
 
 
-Let's see, for those who transferred ETH (direct transfers only), what did they do?
+Row {data-height=50}
+-------------------------------------
 
-First: how much ETH was moved out ("activity", as it doesn't count inflows) of these accounts?
-
-```{r echo=FALSE}
-sum(whalesactivity$AMOUNT)
-```
+We can also check daily activity, measured in amount of transactions and amount of ETH transferred. Here we can verify that the amount of ETH transacted peaked in just two occasions (June 17th and July 21st, for more than a million ETH transferred or spent), while the amount of transactions was somehow more stable, averaging 800 transactions per day during this period:  
 
 
-Then, days with more transactions / amount of ETH transferred:
+Row {data-height=550}
+-------------------------------------
 
 ```{r include=FALSE}
 fig <- plot_ly(whalesactivity %>% group_by(DATE) %>% summarise(ETH = sum(AMOUNT), n = n()))
@@ -197,10 +206,14 @@ fig
 ```  
         
 
+Row {data-height=50}
+-------------------------------------
+So, it's time to see, for those who transferred or spent their ETH, what did they do? Here we'll only analyze direct recipients, and not what those accounts did after they receive their ETH.
 
+First of all, let's identify the top 10 addresses with more transactions, and top 10 based on the amount of ETH spent or transferred:
 
-Top 10 addresses with more transactions (amount of transactions done and by how many accounts)
-
+Row {data-height=450}
+-------------------------------------
 
 ```{r include=FALSE}
 fig2 <- plot_ly(whalesactivity %>%
@@ -220,6 +233,7 @@ renderPlotly({
 fig2
 })
 ```
+
 
 ```{r include=FALSE}
 fig3 <- plot_ly(whalesactivity %>%
@@ -241,10 +255,18 @@ fig3
 ```
 
 
+Row {data-height=50}
+-------------------------------------
+Now lets check what were the most common labels/names to which ETH was transferred
 
-# 3) most common labels to which ETH was transferred
 
-# Address Name
+Row {data-height=550}
+-------------------------------------
+
+### Address Name (ETH transferred)
+
+```{r, fig.height= 4}
+renderPlotly({
 plot_ly(
   data = whalesactivity %>%
     group_by(ADDRESS_NAME) %>% 
@@ -256,7 +278,14 @@ plot_ly(
   parents= "",
   values= ~ETH
 )
+  })
+```
 
+
+### Address Name (amount of transactions)
+
+```{r, fig.height= 4}
+renderPlotly({
 plot_ly(
   data = whalesactivity %>%
     group_by(ADDRESS_NAME) %>% 
@@ -267,11 +296,17 @@ plot_ly(
   labels= ~ADDRESS_NAME,
   parents= "",
   values= ~n
-)
+ )
+})
+```
 
 
+Row {data-height=550}
+-------------------------------------
+### Label type (ETH transferred)
 
-# Label type
+```{r, fig.height= 4}
+renderPlotly({
 plot_ly(
   data = whalesactivity %>%
     group_by(LABEL_TYPE) %>% 
@@ -283,8 +318,14 @@ plot_ly(
   parents= "",
   values= ~ETH
 )
+})
+```
 
 
+### Label type (amount of transactions)
+
+```{r, fig.height= 4}
+renderPlotly({
 plot_ly(
   data = whalesactivity %>%
     group_by(LABEL_TYPE) %>% 
@@ -296,10 +337,16 @@ plot_ly(
   parents= "",
   values= ~n
 )
+})
+```
 
 
-# Label Subtype
+Row {data-height=550}
+-------------------------------------
+### Label subtype (ETH transferred)
 
+```{r, fig.height= 4}
+renderPlotly({
 plot_ly(
   data = whalesactivity %>%
     group_by(LABEL_SUBTYPE) %>% 
@@ -311,7 +358,14 @@ plot_ly(
   parents= "",
   values= ~ETH
 )
+})
+```
 
+
+### Label subtype (amount of transactions)
+
+```{r, fig.height= 4}
+renderPlotly({
 plot_ly(
   data = whalesactivity %>%
     group_by(LABEL_SUBTYPE) %>% 
@@ -323,23 +377,35 @@ plot_ly(
   parents= "",
   values= ~n
 )
+})
+```
 
 
 
+Row {data-height=150}
+-------------------------------------
+
+#### **Key Findings**
+
+asdadsads:
+
+* The majority of whales didn't sell nor buy ETH during this period.
+* b
+* c
 
 
-### Key Findings
-
-
-
-### Analysis Details
+Row {data-height=150}
+-------------------------------------
+#### **Analysis Details**
 
 Date of analysis: 27th July 2022
 
 Contact: Twitter @m_i_g_g
 
 
-### References
+Row {data-height=150}
+-------------------------------------
+#### **References**
 
 https://metricsdao.xyz/
 
