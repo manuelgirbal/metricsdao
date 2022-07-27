@@ -38,7 +38,8 @@ whalesbalance <- data3_1 %>%
            percentual_balance > 0 ~ "increased",
            percentual_balance == -100 ~ "sold all",
            TRUE ~ "sold some"
-         ))
+         )) %>%
+  select(!whales)
 
 
 # Analyzing transactions:
@@ -65,30 +66,146 @@ whalesactivity #renderDT
 sum(whalesactivity$AMOUNT)
 
 # 1) Days with more transactions / amount of ETH transferred:
-plot_ly(whalesactivity %>% group_by(DATE) %>% summarise(n = n()),
-        x = ~DATE, y = ~n, type = 'scatter', mode = 'lines') %>%
-  layout(title = "",
-         yaxis = list(title = "Daily transactions" ,
-                      zeroline = FALSE))
 
-plot_ly(whalesactivity %>% group_by(DATE) %>% summarise(ETH = sum(AMOUNT)),
-        x = ~DATE, y = ~ETH, type = 'scatter', mode = 'lines') %>%
-  layout(title = "",
-         yaxis = list(title = "Daily ETH activity" ,
-                      zeroline = FALSE))
+fig <- plot_ly(whalesactivity %>% group_by(DATE) %>% summarise(ETH = sum(AMOUNT), n = n()))
+
+fig <- fig %>% add_trace(x = ~DATE, y = ~ETH, name = "ETH", mode = "lines+markers", type = "scatter")
+
+ay <- list(
+  tickfont = list(color = "black"),
+  overlaying = "y",
+  side = "right",
+  title = "<b>Daily transactions</b>")
+
+fig <- fig %>% add_trace(x = ~DATE, y = ~n, name = "transactions", yaxis = "y2", mode = "lines+markers", type = "scatter")
+
+fig <- fig %>% layout(
+  title = "Daily ETH transferred from whales and amount of transactions", yaxis2 = ay,
+  xaxis = list(title="Date"),
+  yaxis = list(title="<b>Daily ETH activity</b>")
+)%>%
+  layout(plot_bgcolor='#e5ecf6',
+         xaxis = list(
+           zerolinecolor = '#ffff',
+           zerolinewidth = 2,
+           gridcolor = 'ffff'),
+         yaxis = list(
+           zerolinecolor = '#ffff',
+           zerolinewidth = 2,
+           gridcolor = 'ffff')
+  )
+
+fig
+        
+        
+# 2) Top 10 addresses with more transactions (amount of transactions done and by how many accounts)
+fig2 <- plot_ly(whalesactivity %>%
+                  mutate(address = ORIGIN_FROM_ADDRESS) %>% 
+                  group_by(address) %>% 
+                  summarise(n = n()) %>%
+                  arrange(desc(n)) %>% 
+                  top_n(10),
+                labels = ~address, values = ~n, type = 'pie')
+fig2 <- fig2 %>% layout(title = 'Top 10 whales by transactions',
+                      xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+                      yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+fig2
 
 
 
+fig3 <- plot_ly(whalesactivity %>%
+                  mutate(address = ORIGIN_FROM_ADDRESS) %>% 
+                  group_by(address) %>% 
+                  summarise(ETH = sum(AMOUNT)) %>%
+                  arrange(desc(ETH)) %>% 
+                  top_n(10),
+                labels = ~address, values = ~ETH, type = 'pie')
+fig3 <- fig3 %>% layout(title = 'Top 10 whales by amount of ETH transferred',
+                        xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+                        yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+fig3
 
-# VER SI SALE UN DOUBLE AXIS PLOT con ambas variables en uno solo...
-plot_ly(whalesactivity %>% group_by(DATE) %>% summarise(ETH = sum(AMOUNT), n = n()),
-        x = ~DATE, 
 
-
-# 2) Addresses with more transactions (amount of transactions done and by how many accounts)
-whalesactivity %>% 
-  group_by()
 
 # 3) most common labels to which ETH was transferred
 
-#analizar usar un treemap para las labels más usadas
+# Address Name
+plot_ly(
+  data = whalesactivity %>%
+    group_by(ADDRESS_NAME) %>% 
+    summarise(ETH = sum(AMOUNT)) %>%
+    arrange(desc(ETH)) %>% 
+    top_n(10),
+  type = "treemap",
+  labels= ~ADDRESS_NAME,
+  parents= "",
+  values= ~ETH
+)
+
+plot_ly(
+  data = whalesactivity %>%
+    group_by(ADDRESS_NAME) %>% 
+    summarise(n = n()) %>%
+    arrange(desc(n)) %>% 
+    top_n(10),
+  type = "treemap",
+  labels= ~ADDRESS_NAME,
+  parents= "",
+  values= ~n
+)
+
+
+
+# Label type
+plot_ly(
+  data = whalesactivity %>%
+    group_by(LABEL_TYPE) %>% 
+    summarise(ETH = sum(AMOUNT)) %>%
+    arrange(desc(ETH)) %>% 
+    top_n(10),
+  type = "treemap",
+  labels= ~LABEL_TYPE,
+  parents= "",
+  values= ~ETH
+)
+
+
+plot_ly(
+  data = whalesactivity %>%
+    group_by(LABEL_TYPE) %>% 
+    summarise(n = n()) %>%
+    arrange(desc(n)) %>% 
+    top_n(10),
+  type = "treemap",
+  labels= ~LABEL_TYPE,
+  parents= "",
+  values= ~n
+)
+
+
+# Label Subtype
+
+plot_ly(
+  data = whalesactivity %>%
+    group_by(LABEL_SUBTYPE) %>% 
+    summarise(ETH = sum(AMOUNT)) %>%
+    arrange(desc(ETH)) %>% 
+    top_n(10),
+  type = "treemap",
+  labels= ~LABEL_SUBTYPE,
+  parents= "",
+  values= ~ETH
+)
+
+plot_ly(
+  data = whalesactivity %>%
+    group_by(LABEL_SUBTYPE) %>% 
+    summarise(n = n()) %>%
+    arrange(desc(n)) %>% 
+    top_n(10),
+  type = "treemap",
+  labels= ~LABEL_SUBTYPE,
+  parents= "",
+  values= ~n
+)
+
