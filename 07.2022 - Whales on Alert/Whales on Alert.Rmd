@@ -1,0 +1,176 @@
+---
+title: "Whales on Alert"
+output: 
+  flexdashboard::flex_dashboard:
+    vertical_layout: scroll
+    source_code: https://github.com/manuelgirbal/metricsdao/tree/main/07.2022%20-%20Whales%20on%20Alert
+runtime: shiny
+---
+<style>
+body {
+text-align: justify}
+</style>
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(httr)
+library(jsonlite)
+library(tidyverse)
+library(lubridate)
+library(shiny)
+library(plotly)
+library(DT)
+library(rsconnect)
+```
+
+```{r data, include=FALSE}
+options(scipen=999)
+
+data_1 <- GET("https://node-api.flipsidecrypto.com/api/v2/queries/7a4307c2-3d46-468b-85af-8a4b5cdf7feb/data/latest")
+data_2 <- GET("https://node-api.flipsidecrypto.com/api/v2/queries/4f2ac609-f14c-4119-8130-2dc6c4ede5e0/data/latest")
+
+data2_1 <- rawToChar(data_1$content)
+data2_2 <- rawToChar(data_2$content)
+
+data3_1 <- as_tibble(fromJSON(data2_1, flatten = TRUE))
+whalesactivity <- as_tibble(fromJSON(data2_2, flatten = TRUE))
+
+data3_1[is.na(data3_1)] <- 0
+whalesactivity$DATE <- as_date(whalesactivity$DATE)
+
+
+# Defining whales:
+x <- quantile(data3_1$MAY22BALANCE, .99) # 99 percentile of all ETH hodlers that don't have a labeled account and that had more than 100000 USD in ETH on 2022-05-01
+
+data3_1$whales <- if_else(data3_1$MAY22BALANCE >= x, "whale", "not whale")
+
+table(data3_1$whales)
+
+whalesbalance <- data3_1 %>% 
+  filter(whales == 'whale') %>% 
+  mutate(balance = JULY22BALANCE-MAY22BALANCE,
+         percentual_balance = round((JULY22BALANCE-MAY22BALANCE)/MAY22BALANCE*100,2),
+         outcome = case_when(
+           percentual_balance == 0 ~ "kept",
+           percentual_balance > 0 ~ "increased",
+           percentual_balance == -100 ~ "sold all",
+           TRUE ~ "sold some"
+         )) %>%
+  select(!whales)
+
+```
+
+
+## Introduction
+
+In this article we'll identify active wallets with a high balance of ETH (called whales), and visualize their ETH transaction history in May and June 2022, period in which the USD price of ETH fell from near 3k to values even below 1k USD. 
+
+Specifically, We'll try to identify how many whales are out there, and if they panic-sold ETH in this period. We'll also take a look into the kind of transactions thay did with their ETH.
+
+
+## Data & Methodology
+
+Data was queried from Flipside Crypto's database, Velocity (SQL code used can be found in the Github repository linked above).
+From this app we obtained two main datasets: 
+
+
+Column 
+-------------------------------------
+
+### Dataset 1
+
+A first dataset was obtained from a merge of two tables, one with accounts addresses and ETH balances from 2022-05-01, and other from 2022-07-15. In both cases we just selected non-labeled addresses (in order to exclude exchanges and protocol addresses) and accounts which held more than 10k USD value in ETH at that time.
+
+After this query, we calculated the 99 percentile of the amount of ETH held by these accounts in may, in order to select just top 1% accounts (978 whales). Also, a balance in absolute and percentual values was calculated fro these addresses, in order to compare the july balance against may balance, and see if they increased their ETH position, or whether they kept it or sold some or all of their ETH.
+
+__So in this article we'll consider whales to accounts belonging to the 99 percentile of ETH holders__
+
+```{r}
+renderDT({
+  datatable(whalesbalance,
+    rownames = FALSE,
+    options = list(pageLength = 5,
+                   columnDefs = list(list(className = 'dt-center', 
+                                     targets = "_all"))))
+})
+```
+
+
+Column 
+-------------------------------------
+### Dataset 2
+
+The second table used contains the transaction activity of these whales (if they have made some transfers with ETH from may22 to july22) and the labels of the recipien address of those transactions:
+
+```{r}
+renderDT({
+  datatable(whalesactivity,
+    rownames = FALSE,
+    options = list(pageLength = 5,
+                   columnDefs = list(list(className = 'dt-center', 
+                                     targets = "_all"))))
+})
+```
+
+
+
+
+## Analysis
+
+Column 
+-------------------------------------
+So, first of all, it would be interesting to know how many of these 978 whales kept the same balance between may and july22 (diamond hands), which of those even increased their ETH position (taking advantage of the dip) and how many of them made transactions spending or selling their ETH:
+
+```{r, fig.height= 4}
+renderPlotly({
+fig0 <- plot_ly(whalesbalance %>%
+                  group_by(outcome) %>% 
+                  summarise(n = n()),
+                labels = ~outcome, values = ~n, type = 'pie')
+
+fig0 <- fig0 %>% layout(title = 'Actions taken by whales between May22 and July22',
+                        xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+                        yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+fig0
+})
+```
+
+So, most of them (713) kept the same ETH balance, and 75 whales increased their amount held. But it's also interesting to note that 56 whales sold all their ETH (or at least they send them away from their account -more on this later-), and that 134 sold at least some of them.
+
+
+Column 
+-------------------------------------
+
+To get a better understanding of the variation in their balance between may and july, let's take a look at this chart (which excludes accounts which held their ETH position):
+
+```{r, fig.height= 4}
+renderPlotly({
+plot_ly(data = whalesbalance %>% filter(percentual_balance != 0),
+        x = ~percentual_balance, 
+        type = "histogram") %>% 
+  layout(bargap=0.1,
+         xaxis = list(title = 'Whales percentual balance change (may22-july22)'),
+         autosize = F
+  )
+})
+```
+
+
+## Key Findings
+
+
+
+## Analysis Details
+
+Date of analysis: 29th May 2022
+
+Ethereum NFT
+
+Contact: Discord Pinehearst#1947 | Twitter @pinehearst_
+
+
+## References
+
+https://metricsdao.xyz/
+
+https://flipsidecrypto.xyz/

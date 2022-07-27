@@ -27,8 +27,6 @@ x <- quantile(data3_1$MAY22BALANCE, .99) # 99 percentile of all ETH hodlers that
 
 data3_1$whales <- if_else(data3_1$MAY22BALANCE >= x, "whale", "not whale")
 
-table(data3_1$whales)
-
 whalesbalance <- data3_1 %>% 
   filter(whales == 'whale') %>% 
   mutate(balance = JULY22BALANCE-MAY22BALANCE,
@@ -42,12 +40,26 @@ whalesbalance <- data3_1 %>%
   select(!whales)
 
 
+
+
+
+
+
 # Analyzing transactions:
 # How many whales kept same balance? # How many hodl more now?
 
 whalesbalance #renderDT
 
-table(whalesbalance$outcome)
+fig0 <- plot_ly(whalesbalance %>%
+                  group_by(outcome) %>% 
+                  summarise(n = n()),
+                labels = ~outcome, values = ~n, type = 'pie')
+
+fig0 <- fig0 %>% layout(title = 'Actions taken by whales between May22 and July22',
+                        xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+                        yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+fig0
+
 
 plot_ly(data = whalesbalance %>% filter(percentual_balance != 0),
         x = ~percentual_balance, 
