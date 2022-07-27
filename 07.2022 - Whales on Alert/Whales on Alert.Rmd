@@ -61,21 +61,18 @@ whalesbalance <- data3_1 %>%
 ```
 
 
-## Introduction
+### Introduction
 
 In this article we'll identify active wallets with a high balance of ETH (called whales), and visualize their ETH transaction history in May and June 2022, period in which the USD price of ETH fell from near 3k to values even below 1k USD. 
 
 Specifically, We'll try to identify how many whales are out there, and if they panic-sold ETH in this period. We'll also take a look into the kind of transactions thay did with their ETH.
 
 
-## Data & Methodology
+### Data & Methodology
 
 Data was queried from Flipside Crypto's database, Velocity (SQL code used can be found in the Github repository linked above).
 From this app we obtained two main datasets: 
 
-
-Column 
--------------------------------------
 
 ### Dataset 1
 
@@ -96,8 +93,7 @@ renderDT({
 ```
 
 
-Column 
--------------------------------------
+
 ### Dataset 2
 
 The second table used contains the transaction activity of these whales (if they have made some transfers with ETH from may22 to july22) and the labels of the recipien address of those transactions:
@@ -114,11 +110,8 @@ renderDT({
 
 
 
+### Analysis
 
-## Analysis
-
-Column 
--------------------------------------
 So, first of all, it would be interesting to know how many of these 978 whales kept the same balance between may and july22 (diamond hands), which of those even increased their ETH position (taking advantage of the dip) and how many of them made transactions spending or selling their ETH:
 
 ```{r, fig.height= 4}
@@ -138,9 +131,6 @@ fig0
 So, most of them (713) kept the same ETH balance, and 75 whales increased their amount held. But it's also interesting to note that 56 whales sold all their ETH (or at least they send them away from their account -more on this later-), and that 134 sold at least some of them.
 
 
-Column 
--------------------------------------
-
 To get a better understanding of the variation in their balance between may and july, let's take a look at this chart (which excludes accounts which held their ETH position):
 
 ```{r, fig.height= 4}
@@ -156,20 +146,200 @@ plot_ly(data = whalesbalance %>% filter(percentual_balance != 0),
 ```
 
 
-## Key Findings
+
+Let's see, for those who transferred ETH (direct transfers only), what did they do?
+
+First: how much ETH was moved out ("activity", as it doesn't count inflows) of these accounts?
+
+```{r echo=FALSE}
+sum(whalesactivity$AMOUNT)
+```
+
+
+Then, days with more transactions / amount of ETH transferred:
+
+```{r include=FALSE}
+fig <- plot_ly(whalesactivity %>% group_by(DATE) %>% summarise(ETH = sum(AMOUNT), n = n()))
+
+fig <- fig %>% add_trace(x = ~DATE, y = ~ETH, name = "ETH", mode = "lines+markers", type = "scatter")
+
+ay <- list(
+  tickfont = list(color = "black"),
+  overlaying = "y",
+  side = "right",
+  title = "<b>Daily transactions</b>")
+
+fig <- fig %>% add_trace(x = ~DATE, y = ~n, name = "transactions", yaxis = "y2", mode = "lines+markers", type = "scatter")
+
+fig <- fig %>% layout(
+  title = "Daily ETH transferred from whales and amount of transactions", yaxis2 = ay,
+  xaxis = list(title="Date"),
+  yaxis = list(title="<b>Daily ETH activity</b>")
+)%>%
+  layout(plot_bgcolor='#e5ecf6',
+         xaxis = list(
+           zerolinecolor = '#ffff',
+           zerolinewidth = 2,
+           gridcolor = 'ffff'),
+         yaxis = list(
+           zerolinecolor = '#ffff',
+           zerolinewidth = 2,
+           gridcolor = 'ffff')
+  )
+```
 
 
 
-## Analysis Details
+```{r, fig.height= 4}
+renderPlotly({
+fig
+})
+```  
+        
 
-Date of analysis: 29th May 2022
-
-Ethereum NFT
-
-Contact: Discord Pinehearst#1947 | Twitter @pinehearst_
 
 
-## References
+Top 10 addresses with more transactions (amount of transactions done and by how many accounts)
+
+
+```{r include=FALSE}
+fig2 <- plot_ly(whalesactivity %>%
+                  mutate(address = ORIGIN_FROM_ADDRESS) %>% 
+                  group_by(address) %>% 
+                  summarise(n = n()) %>%
+                  arrange(desc(n)) %>% 
+                  top_n(10),
+                labels = ~address, values = ~n, type = 'pie')
+fig2 <- fig2 %>% layout(title = 'Top 10 whales by transactions',
+                      xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+                      yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+```
+
+```{r, fig.height= 4}
+renderPlotly({
+fig2
+})
+```
+
+```{r include=FALSE}
+fig3 <- plot_ly(whalesactivity %>%
+                  mutate(address = ORIGIN_FROM_ADDRESS) %>% 
+                  group_by(address) %>% 
+                  summarise(ETH = sum(AMOUNT)) %>%
+                  arrange(desc(ETH)) %>% 
+                  top_n(10),
+                labels = ~address, values = ~ETH, type = 'pie')
+fig3 <- fig3 %>% layout(title = 'Top 10 whales by amount of ETH transferred',
+                        xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+                        yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+```
+                        
+```{r, fig.height= 4}
+renderPlotly({
+fig3
+})
+```
+
+
+
+# 3) most common labels to which ETH was transferred
+
+# Address Name
+plot_ly(
+  data = whalesactivity %>%
+    group_by(ADDRESS_NAME) %>% 
+    summarise(ETH = sum(AMOUNT)) %>%
+    arrange(desc(ETH)) %>% 
+    top_n(10),
+  type = "treemap",
+  labels= ~ADDRESS_NAME,
+  parents= "",
+  values= ~ETH
+)
+
+plot_ly(
+  data = whalesactivity %>%
+    group_by(ADDRESS_NAME) %>% 
+    summarise(n = n()) %>%
+    arrange(desc(n)) %>% 
+    top_n(10),
+  type = "treemap",
+  labels= ~ADDRESS_NAME,
+  parents= "",
+  values= ~n
+)
+
+
+
+# Label type
+plot_ly(
+  data = whalesactivity %>%
+    group_by(LABEL_TYPE) %>% 
+    summarise(ETH = sum(AMOUNT)) %>%
+    arrange(desc(ETH)) %>% 
+    top_n(10),
+  type = "treemap",
+  labels= ~LABEL_TYPE,
+  parents= "",
+  values= ~ETH
+)
+
+
+plot_ly(
+  data = whalesactivity %>%
+    group_by(LABEL_TYPE) %>% 
+    summarise(n = n()) %>%
+    arrange(desc(n)) %>% 
+    top_n(10),
+  type = "treemap",
+  labels= ~LABEL_TYPE,
+  parents= "",
+  values= ~n
+)
+
+
+# Label Subtype
+
+plot_ly(
+  data = whalesactivity %>%
+    group_by(LABEL_SUBTYPE) %>% 
+    summarise(ETH = sum(AMOUNT)) %>%
+    arrange(desc(ETH)) %>% 
+    top_n(10),
+  type = "treemap",
+  labels= ~LABEL_SUBTYPE,
+  parents= "",
+  values= ~ETH
+)
+
+plot_ly(
+  data = whalesactivity %>%
+    group_by(LABEL_SUBTYPE) %>% 
+    summarise(n = n()) %>%
+    arrange(desc(n)) %>% 
+    top_n(10),
+  type = "treemap",
+  labels= ~LABEL_SUBTYPE,
+  parents= "",
+  values= ~n
+)
+
+
+
+
+
+### Key Findings
+
+
+
+### Analysis Details
+
+Date of analysis: 27th July 2022
+
+Contact: Twitter @m_i_g_g
+
+
+### References
 
 https://metricsdao.xyz/
 
