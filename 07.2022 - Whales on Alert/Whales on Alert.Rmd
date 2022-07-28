@@ -12,6 +12,10 @@ body {
 text-align: justify}
 </style>
 
+<style>
+    body { background-color: white; }
+</style>
+
 ```{r setup, include=FALSE}
 library(flexdashboard)
 library(httr)
