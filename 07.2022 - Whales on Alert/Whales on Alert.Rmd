@@ -50,24 +50,24 @@ table(data3_1$whales)
 whalesbalance <- data3_1 %>% 
   filter(whales == 'whale') %>% 
   mutate(balance = JULY22BALANCE-MAY22BALANCE,
-         percentual_balance = round((JULY22BALANCE-MAY22BALANCE)/MAY22BALANCE*100,2),
+         percentage_balance = round((JULY22BALANCE-MAY22BALANCE)/MAY22BALANCE*100,2),
          outcome = case_when(
-           percentual_balance == 0 ~ "kept",
-           percentual_balance > 0 ~ "increased",
-           percentual_balance == -100 ~ "sold all",
+           percentage_balance == 0 ~ "kept",
+           percentage_balance > 0 ~ "increased",
+           percentage_balance == -100 ~ "sold all",
            TRUE ~ "sold some"
          )) %>%
   select(!whales)
 
 ```
 
-Row {data-height=100}
+Row {data-height=120}
 -------------------------------------
 #### **Introduction**
 
 In this article we'll identify active wallets with a high balance of ETH (called whales), and visualize their ETH transaction history in May and June 2022, period in which the USD price of ETH fell from near 3k to values even below 1k USD. Specifically, We'll try to identify how many whales are out there, and if they panic-sold ETH in this period. We'll also take a look into the kind of transactions they did with their ETH.
 
-Row {data-height=100}
+Row {data-height=75}
 -------------------------------------
 #### **Data & Methodology**
 
@@ -75,7 +75,7 @@ Data was queried from Flipside Crypto's database, Velocity. SQL code used can be
 From this app we obtained two main datasets: 
 
 
-Row {data-height=450}
+Row {data-height=500}
 -------------------------------------
 ### Dataset 1
 
@@ -96,7 +96,7 @@ renderDT({
 })
 ```
 
-Row {data-height=350}
+Row {data-height=400}
 -------------------------------------
 
 ### Dataset 2
@@ -105,7 +105,7 @@ The second table used contains transaction activity of these whales (if they hav
 
 ```{r}
 renderDT({
-  datatable(whalesactivity,
+  datatable(whalesactivity %>% select(!c(LABEL_SUBTYPE, LABEL)),
     rownames = FALSE,
     options = list(pageLength = 5,
                    columnDefs = list(list(className = 'dt-center', 
@@ -122,7 +122,7 @@ Row {data-height=150}
 So, first of all, it would be interesting to know how many of these 978 whales kept the same balance between may and july22 (diamond hands), which of those increased their ETH position (taking advantage of the dip), and how many of them made transactions spending or selling their ETH. 
 Also, to get a better understanding of the variation in their balance, we can take a look at the histogram (which excludes accounts that held their ETH position for a better appreciation):
 
-Row {data-height=550}
+Row {data-height=450}
 -------------------------------------
 
 ```{r, fig.height= 4}
@@ -142,8 +142,8 @@ fig0
 
 ```{r, fig.height= 4}
 renderPlotly({
-plot_ly(data = whalesbalance %>% filter(percentual_balance != 0),
-        x = ~percentual_balance, 
+plot_ly(data = whalesbalance %>% filter(percentage_balance != 0),
+        x = ~percentage_balance, 
         type = "histogram") %>% 
   layout(bargap=0.1,
          xaxis = list(title = 'Balance change %'),
@@ -152,19 +152,19 @@ plot_ly(data = whalesbalance %>% filter(percentual_balance != 0),
 })
 ```
 
-Row {data-height=50}
+Row {data-height=125}
 -------------------------------------
 So, it's clear that most of them (713) kept the same ETH balance, and 75 whales increased their amount held. But it's also interesting to note that 56 whales sold all their ETH (or at least they send them away from their account -more on this later-), and that 134 sold at least some of them.
 As regards to the percentage change in their balances, it's interesting to note that many of them (74 whales) just saw less than a 10% change (either positive or negative), while very few increased their position above a 100% change (which seems unsderstadable as they are already whales!).  
 
 
-Row {data-height=50}
+Row {data-height=100}
 -------------------------------------
 
 We can also check daily activity, measured in amount of transactions and amount of ETH transferred. Here we can verify that the amount of ETH transacted peaked in just two occasions (June 17th and July 21st, for more than a million ETH transferred or spent), while the amount of transactions was somehow more stable, averaging 800 transactions per day during this period:  
 
 
-Row {data-height=550}
+Row {data-height=450}
 -------------------------------------
 
 ```{r include=FALSE}
@@ -206,13 +206,12 @@ fig
 ```  
         
 
-Row {data-height=50}
+Row {data-height=100}
 -------------------------------------
-So, it's time to see, for those who transferred or spent their ETH, what did they do? Here we'll only analyze direct recipients, and not what those accounts did after they receive their ETH.
-
+So, it's time to see, for those who transferred or spent their ETH, what did they do? Here we'll only analyze direct recipients, and not what those accounts did after they receive their ETH. 
 First of all, let's identify the top 10 addresses with more transactions, and top 10 based on the amount of ETH spent or transferred:
 
-Row {data-height=450}
+Row {data-height=400}
 -------------------------------------
 
 ```{r include=FALSE}
@@ -257,7 +256,7 @@ fig3
 
 Row {data-height=50}
 -------------------------------------
-Now lets check what were the most common labels/names to which ETH was transferred
+Now lets check what were the most common labels/address names that received the biggest amount of transactions and also the amount of ETH received:
 
 
 Row {data-height=550}
@@ -340,46 +339,15 @@ plot_ly(
 })
 ```
 
-
-Row {data-height=550}
+Row {data-height=125}
 -------------------------------------
-### Label subtype (ETH transferred)
+As regards to the amount of ETH transferred, and based on the recipient address name, the biggest amount was used for swapping it for wrapped ETH (wETH), which is commonly used for trading and DeFi operations in other chains (and even on Ethereum with different functionalities than ETH). 
+If we take a look into the label type of recipients, this insight can be complemented by other fact: centralized exchanges (CEX) received almost half of the ETH that was spent by these whales. This is supported if we go back to address names, as crypto.com is the second name that received more ETH.
+Dapps and Dexes (decentralized apps and exchanges) also received a significant amount of ETH, which makes sense given the fact that those are natural places for wETH.
 
-```{r, fig.height= 4}
-renderPlotly({
-plot_ly(
-  data = whalesactivity %>%
-    group_by(LABEL_SUBTYPE) %>% 
-    summarise(ETH = sum(AMOUNT)) %>%
-    arrange(desc(ETH)) %>% 
-    top_n(10),
-  type = "treemap",
-  labels= ~LABEL_SUBTYPE,
-  parents= "",
-  values= ~ETH
-)
-})
-```
-
-
-### Label subtype (amount of transactions)
-
-```{r, fig.height= 4}
-renderPlotly({
-plot_ly(
-  data = whalesactivity %>%
-    group_by(LABEL_SUBTYPE) %>% 
-    summarise(n = n()) %>%
-    arrange(desc(n)) %>% 
-    top_n(10),
-  type = "treemap",
-  labels= ~LABEL_SUBTYPE,
-  parents= "",
-  values= ~n
-)
-})
-```
-
+Row {data-height=50}
+-------------------------------------
+However, if we dive into the amount of transactions made (despite their ETH total value), another interesting aspect comes to light: many of these whales sent ETH to Tornado Cash, which makes transactions on Ethereum more private. It appears that some of these accounts didn't want us to know what they did with their money during these difficult months.
 
 
 Row {data-height=150}
@@ -387,14 +355,13 @@ Row {data-height=150}
 
 #### **Key Findings**
 
-asdadsads:
-
 * The majority of whales didn't sell nor buy ETH during this period.
-* b
-* c
+* Many of those that sold ETH or increased their position made it in amounts that implied less than a 10% change in their balance.
+* Most of the ETH was used for swapping with wETH and sending ETH to centralized exchanges.
+* Many transactions were sent to Tornado Cash, which implies that many whales look for privacy when they want to use their ETH.
 
 
-Row {data-height=150}
+Row {data-height=100}
 -------------------------------------
 #### **Analysis Details**
 
@@ -403,7 +370,7 @@ Date of analysis: 27th July 2022
 Contact: Twitter @m_i_g_g
 
 
-Row {data-height=150}
+Row {data-height=100}
 -------------------------------------
 #### **References**
 

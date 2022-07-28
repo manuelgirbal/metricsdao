@@ -40,11 +40,6 @@ whalesbalance <- data3_1 %>%
   select(!whales)
 
 
-
-
-
-
-
 # Analyzing transactions:
 # How many whales kept same balance? # How many hodl more now?
 
