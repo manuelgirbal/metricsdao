@@ -2,7 +2,7 @@ library(tidyverse)
 library(geckor)
 library(lubridate)
 
-# getting data from Coingecko
+# getting data from Coingecko's free API (https://www.coingecko.com/)
 
 ref <- coin_history(coin_id = "ref-finance", 
                                 vs_currency = "usd", 
@@ -42,12 +42,11 @@ near <- near %>%
 
 prices <- rbind(near, ref, jumbo)
 
-write_csv(prices, file = "11-2022 - NEAR - Comparing The Top Projects/prices.csv")
+
+# writing csv
+
+write_csv(prices, file = "11-2022 - NEAR - Comparing The Top Projects/Data/prices.csv")
 
 
-# plot 
 
-ggplot(prices, aes(x = date, y = price, color = coin_id) ) +
-  geom_line() +
-  theme_minimal()
 
