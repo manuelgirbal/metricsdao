@@ -39,7 +39,9 @@ write_csv(data, file = "11.2022 - NEAR - Comparing The Top Projects/Data/data.cs
 
 ggplot(data, aes(x = DATE, y = PRICE, color = DEX) ) +
   geom_line() +
-  theme_minimal()
+  theme_minimal() +
+  xlab("Date") +
+  ylab("")
 
 plot_ly(data, type = 'scatter', mode = 'lines', color = ~DEX)%>%
   add_trace(x = ~DATE, y = ~PRICE)

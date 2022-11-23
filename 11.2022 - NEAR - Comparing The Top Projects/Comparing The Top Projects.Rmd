@@ -1,62 +1,76 @@
 ---
-title: "Untitled"
+title: "NEAR - Comparing the top projects"
 output: 
   flexdashboard::flex_dashboard:
-    orientation: columns
-    vertical_layout: fill
+    vertical_layout: scroll
+    source_code: https://github.com/manuelgirbal/metricsdao/tree/main/11.2022%20-%20NEAR%20-%20Comparing%20The%20Top%20Projects
+runtime: shiny
 ---
+
+<style>
+body {
+text-align: justify}
+</style>
 
 ```{r setup, include=FALSE}
 library(flexdashboard)
+library(tidyverse)
+library(shiny)
+library(plotly)
+library(rsconnect)
 ```
 
-Column {data-width=650}
+```{r data, include=FALSE}
+options(scipen=999)
+
+data <- read_csv("Data/data.csv")
+
+Variables = c("NEW_USERS", "PRICE", "VOLUME", "MARKET_CAP", "AMOUNT", "TRADERS")
+```
+
+
+Column {.sidebar data-width=200}
 -----------------------------------------------------------------------
-
-### Chart A
-
 ```{r}
-
+selectInput("Variable", label = "Select variable:", choices = Variables)
 ```
 
-Column {data-width=350}
+
+Column {data-width=400}
 -----------------------------------------------------------------------
+### Introduction & analysis
 
-### Chart B
+Let’s take a closer look at some of the biggest and best-known projects in the NEAR ecosystem.Choose one of the Top projects in the NEAR ecosystem (a list can be found below). Analyze the project and its health. You can include baseline measures, e.g. token price (if applicable), transaction volume, etc., but go beyond that and apply your analysis skills. Choose and define at least 2 measures of ecosystem health, and assess how the project is performing on those metrics. Grand prize winners will also compare the project to at least one other Top NEAR project using the 2 measures provided.
+
+aclarar tablas que usamos (y qué significan), y otras fuentes como Coingecko, además de que lo hicimos vía Shroom_SDK
+posible baseline el día que arranca Jumbo
+de las tablas queremos tener (como medidas de salud del ecosistema -recordar definirlas metodológicamente-):
+ precio -- ok
+ volumen de transacciones (solo estables -in swap-) -- ok (también hay volumen Coingecko)
+ usuarios diarios -- ok
+ nuevos usuarios -- ok
+
+ usamos data de los últimos 6 meses (desde principios de mayo 22)
+
+ El volumen de comercio en 24 horas hace referencia a la cantidad de una criptomoneda 
+ que se ha comprado y vendido en todos los intercambios en las últimas 24 horas 
+ en el mercado al contado.
+
+ Para el panel con variables interactivas debería tener todo en una sola table
+
+### Ref.finance vs Jumbo
 
 ```{r}
-
+renderPlot({
+   ggplot(data, aes(x = DATE, y = data[[input$Variable]], color = DEX) ) +
+    geom_line() +
+    theme_minimal() +
+    xlab("Date") +
+    ylab("")
+})
 ```
 
-### Chart C
-
-```{r}
-
-```
 
 
 
-# Let’s take a closer look at some of the biggest and best-known projects in the NEAR ecosystem.
-# Choose one of the Top projects in the NEAR ecosystem (a list can be found below). 
-# Analyze the project and its health.
-# You can include baseline measures, e.g. token price (if applicable), transaction volume, etc., but go beyond that and apply your analysis skills. 
-# Choose and define at least 2 measures of ecosystem health, and assess how the project is performing on those metrics.
-# Grand prize winners will also compare the project to at least one other Top NEAR project using the 2 measures provided.
 
-# aclarar tablas que usamos (y qué significan), y otras fuentes como Coingecko, además de que lo hicimos vía Shroom_SDK
-# posible baseline el día que arranca Jumbo
-# de las tablas queremos tener (como medidas de salud del ecosistema -recordar definirlas metodológicamente-):
-  # precio -- ok
-  # volumen de transacciones (solo estables -in swap-) -- ok (también hay volumen Coingecko)
-  # usuarios diarios -- ok
-  # nuevos usuarios -- ok
-
-
-# usamos data de los últimos 6 meses (desde principios de mayo 22)
-
-## El volumen de comercio en 24 horas hace referencia a la cantidad de una criptomoneda 
-## que se ha comprado y vendido en todos los intercambios en las últimas 24 horas 
-## en el mercado al contado. 
-
-
-# Para el panel con variables interactivas debería tener todo en una sola table
