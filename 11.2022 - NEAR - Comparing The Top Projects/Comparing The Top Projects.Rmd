@@ -1,5 +1,6 @@
 ---
 title: "NEAR - Comparing the top projects"
+author: manuelgg (@m_i_g_g)
 output: 
   flexdashboard::flex_dashboard:
     vertical_layout: scroll
@@ -25,52 +26,55 @@ options(scipen=999)
 
 data <- read_csv("Data/data.csv")
 
-Variables = c("NEW_USERS", "PRICE", "VOLUME", "MARKET_CAP", "AMOUNT", "TRADERS")
+Variables = c("NEW_USERS", "PRICE", "AMOUNT", "TRADERS")
 ```
 
 
-Column {.sidebar data-width=200}
+Column {.sidebar data-width=250}
 -----------------------------------------------------------------------
 ```{r}
-selectInput("Variable", label = "Select variable:", choices = Variables)
+selectInput("Variable", label = h3("Data:"), choices = Variables)
 ```
 
+Data was queried from [Flipside Crypto](https://flipsidecrypto.xyz/) and [Coingecko](https://www.coingecko.com/) using their APIs (see code for more detail).
+
+- **AMOUNT***: amount of daily USD value used for swapping inside the DEX. 
+- **NEW_USERS***: amount of daily new users that swapped inside the DEX.
+- **TRADERS***: amount of daily users that swapped inside the DEX.
+- **PRICE**: evolution of the DEX native token price in USD value.
+
+*_For these variables only swaps done with stablecoins (DAI, USN, USDT & USDC) were considered._
 
 Column {data-width=400}
 -----------------------------------------------------------------------
-### Introduction & analysis
+### Introduction
 
-Let’s take a closer look at some of the biggest and best-known projects in the NEAR ecosystem.Choose one of the Top projects in the NEAR ecosystem (a list can be found below). Analyze the project and its health. You can include baseline measures, e.g. token price (if applicable), transaction volume, etc., but go beyond that and apply your analysis skills. Choose and define at least 2 measures of ecosystem health, and assess how the project is performing on those metrics. Grand prize winners will also compare the project to at least one other Top NEAR project using the 2 measures provided.
+Let’s take a closer look at some of the biggest and best-known projects in the NEAR ecosystem.
+In this dashboard, we we'll be comparing two of NEAR's most known decentralized exchanges: [Ref.finance](https://www.ref.finance/) and [Jumbo](https://jumbo.exchange/).
 
-aclarar tablas que usamos (y qué significan), y otras fuentes como Coingecko, además de que lo hicimos vía Shroom_SDK
-posible baseline el día que arranca Jumbo
-de las tablas queremos tener (como medidas de salud del ecosistema -recordar definirlas metodológicamente-):
- precio -- ok
- volumen de transacciones (solo estables -in swap-) -- ok (también hay volumen Coingecko)
- usuarios diarios -- ok
- nuevos usuarios -- ok
+The 4 metrics chosen to compare each project's health since May 22 are described on the side bar, where you'll be able to choose which comparison variable you'd like to see.
 
- usamos data de los últimos 6 meses (desde principios de mayo 22)
-
- El volumen de comercio en 24 horas hace referencia a la cantidad de una criptomoneda 
- que se ha comprado y vendido en todos los intercambios en las últimas 24 horas 
- en el mercado al contado.
-
- Para el panel con variables interactivas debería tener todo en una sola table
 
 ### Ref.finance vs Jumbo
 
 ```{r}
 renderPlot({
    ggplot(data, aes(x = DATE, y = data[[input$Variable]], color = DEX) ) +
-    geom_line() +
+    geom_line(size=1) +
     theme_minimal() +
     xlab("Date") +
-    ylab("")
+    ylab("") +
+    scale_x_date(date_breaks = "1 month", date_labels = "%m-%Y")
 })
 ```
 
+### Key insights
 
+- Amount of value transacted on Ref is way more significant than on Jumbo, but it saw better days on May 22 than now.
+- Daily users and new users is also bigger in Ref (the amount of daily new users on Jumbo is close to 0 in many of those days). These variables remained more or less stable during the last six months (it doesn't appear to be a decline on both DEXes usage).
+- Both token prices are declining (not a big surprise in this bear market), but $REF might be stabilizing. 
+
+Overall, Ref is more used than Jumbo as regards to trading with stablecoins, but this might be also due to the first one being an older project than the latter. 
 
 
 

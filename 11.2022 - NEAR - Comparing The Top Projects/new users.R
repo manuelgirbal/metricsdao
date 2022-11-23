@@ -16,8 +16,12 @@ query <- create_query_token(
                      end as dex,
                      min(date(block_timestamp)) as first_date
               from near.core.ez_dex_swaps
-                where platform like '%ref%'
-                   or platform like '%jumbo%'
+              where (platform like '%ref%'
+                    or platform like '%jumbo%')
+                and (token_in = 'USDT' 
+                    or token_in = 'USDC'
+                    or token_in = 'USN'
+                    or token_in = 'DAI')
               group by 1, 2
               )
               
