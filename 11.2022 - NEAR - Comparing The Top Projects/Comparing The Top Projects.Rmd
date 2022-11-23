@@ -1,3 +1,41 @@
+---
+title: "Untitled"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+```
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Chart A
+
+```{r}
+
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Chart B
+
+```{r}
+
+```
+
+### Chart C
+
+```{r}
+
+```
+
+
+
 # Let’s take a closer look at some of the biggest and best-known projects in the NEAR ecosystem.
 # Choose one of the Top projects in the NEAR ecosystem (a list can be found below). 
 # Analyze the project and its health.
@@ -11,27 +49,14 @@
   # precio -- ok
   # volumen de transacciones (solo estables -in swap-) -- ok (también hay volumen Coingecko)
   # usuarios diarios -- ok
-  # nuevos usuarios 
-  # active users (7 days, 30 days, etc)
+  # nuevos usuarios -- ok
 
+
+# usamos data de los últimos 6 meses (desde principios de mayo 22)
 
 ## El volumen de comercio en 24 horas hace referencia a la cantidad de una criptomoneda 
 ## que se ha comprado y vendido en todos los intercambios en las últimas 24 horas 
 ## en el mercado al contado. 
 
 
-library(tidyverse)
-
-
-# reading data (last updated 2022-11-22)
-
-swaps <- read_csv("11-2022 - NEAR - Comparing The Top Projects/Data/swaps.csv")
-prices <- read_csv("11-2022 - NEAR - Comparing The Top Projects/Data/prices.csv")
-
-
-# plot 
-
-
-ggplot(prices, aes(x = date, y = price, color = coin_id) ) +
-  geom_line() +
-  theme_minimal()
+# Para el panel con variables interactivas debería tener todo en una sola table

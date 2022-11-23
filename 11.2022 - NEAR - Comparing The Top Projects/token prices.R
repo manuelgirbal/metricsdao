@@ -26,26 +26,21 @@ jumbo <- jumbo %>%
             volume = mean(total_volume),
             market_cap = mean(market_cap))
 
-near <- coin_history(coin_id = "near", 
-                      vs_currency = "usd", 
-                      days = "max")
 
-near <- near %>% 
-  mutate(date = date(timestamp)) %>% 
-  group_by(date, coin_id) %>% 
-  summarise(price = mean(price),
-            volume = mean(total_volume),
-            market_cap = mean(market_cap))
+# table join and transformation
 
+prices <- rbind(ref, jumbo)
 
-# table join
-
-prices <- rbind(near, ref, jumbo)
+prices <- prices %>% 
+  mutate(coin_id = case_when(
+    coin_id == 'ref-finance' ~ 'ref',
+    TRUE ~ 'jumbo'
+  ))
 
 
 # writing csv
 
-write_csv(prices, file = "11-2022 - NEAR - Comparing The Top Projects/Data/prices.csv")
+write_csv(prices, file = "11.2022 - NEAR - Comparing The Top Projects/Data/prices.csv")
 
 
 
