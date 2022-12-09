@@ -58,13 +58,15 @@ The 4 metrics chosen to compare each project's health since May 22 are described
 ### Ref.finance vs Jumbo
 
 ```{r}
-renderPlot({
-   ggplot(data, aes(x = DATE, y = data[[input$Variable]], color = DEX) ) +
+renderPlotly({
+  ggplotly(
+    ggplot(data, aes(x = DATE, y = data[[input$Variable]], color = DEX) ) +
     geom_line(size=1) +
     theme_minimal() +
     xlab("Date") +
     ylab("") +
     scale_x_date(date_breaks = "1 month", date_labels = "%m-%Y")
+)
 })
 ```
 
